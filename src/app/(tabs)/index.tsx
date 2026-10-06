@@ -1,6 +1,5 @@
 // src/app/(tabs)/index.tsx 
-import { useState, useEffect, useRef } from "react";
-import { router } from "expo-router"; 
+import { useState, useEffect, useRef, useCallback } from "react"; 
 import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
 import { View, Text, ActivityIndicator, Button, TouchableOpacity } from "react-native"; 
 import { SafeAreaView } from "react-native-safe-area-context"; 
@@ -16,7 +15,12 @@ import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes"; 
 import { HasilGeocoding } from "../../../types/geocoding"; 
 import { DataCuacaLengkap, DataKualitasUdara } from "../../../types/weather"; 
- 
+import { router, useFocusEffect } from "expo-router";
+
+// Tambahan import untuk Latihan Mandiri No. 3
+import { ambilSemuaFavorit } from "../../services/favoritStorage";
+import { KotaFavorit } from "../../../types/favorit";
+
 export default function HalamanUtama() { 
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
   const [teksCari, setTeksCari] = useState(""); 
@@ -27,6 +31,21 @@ export default function HalamanUtama() {
   const [sedangMemuat, setSedangMemuat] = useState(false); 
   const [pesanError, setPesanError] = useState<string | null>(null); 
  
+  // State untuk menyimpan daftar favorit tersimpan
+  const [daftarFavorit, setDaftarFavorit] = useState<KotaFavorit[]>([]);
+
+  // Refresh daftar favorit tiap kali layar Beranda difokuskan
+  useFocusEffect(
+    useCallback(() => {
+      ambilSemuaFavorit().then(setDaftarFavorit);
+    }, [])
+  );
+
+  // Cek apakah kotaTerpilih saat ini sudah ada di dalam daftar favorit
+  const sudahFavorit = kotaTerpilih 
+    ? daftarFavorit.some((k) => k.id === kotaTerpilih.id)
+    : false;
+
   const teksTertunda = useDebounce(teksCari, 500); 
   const requestIdRef = useRef(0); // pencegah race condition 
  
@@ -63,34 +82,34 @@ export default function HalamanUtama() {
   } 
   
   async function gunakanLokasiSaatIni() { 
-  const status = await mintaIzinLokasi(); 
-  
-  if (status === "denied") { 
-    setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas."); 
-    return; 
+    const status = await mintaIzinLokasi(); 
+    
+    if (status === "denied") { 
+      setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas."); 
+      return; 
+    } 
+    if (status === "unavailable") { 
+      setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual."); 
+      return; 
+    } 
+    
+    setPesanLokasi(null); 
+    const koordinat = await ambilKoordinatSaatIni(); 
+    pilihKota({ 
+      id: -1, 
+      name: "Lokasi Saat Ini", 
+      latitude: koordinat.latitude, 
+      longitude: koordinat.longitude, 
+      country: "", 
+    }); 
   } 
-  if (status === "unavailable") { 
-    setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual."); 
-    return; 
-  } 
-  
-  setPesanLokasi(null); 
-  const koordinat = await ambilKoordinatSaatIni(); 
-  pilihKota({ 
-    id: -1, 
-    name: "Lokasi Saat Ini", 
-    latitude: koordinat.latitude, 
-    longitude: koordinat.longitude, 
-    country: "", 
-  }); 
-} 
 
   return ( 
     <SafeAreaView style={{ flex: 1, padding: 16, gap: 16 }}> 
       <SearchBox onCari={setTeksCari} />
 
       <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} /> 
-{pesanLokasi && <Text>{pesanLokasi}</Text>} 
+      {pesanLokasi && <Text>{pesanLokasi}</Text>} 
 
       {hasilPencarian.map((kota) => ( 
         <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}> 
@@ -111,44 +130,42 @@ export default function HalamanUtama() {
       )} 
  
       {cuaca && kualitasUdara && kotaTerpilih && !sedangMemuat && ( 
-  <> 
-    <WeatherCard 
-      kota={kotaTerpilih.name} 
-      suhu={cuaca.saatIni.suhu} 
-      tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)} 
-    /> 
-    <Button 
-      title="Tambahkan ke Favorit" 
-      onPress={() => 
-        router.push({ 
-          pathname: "/tambah-favorit", 
-          params: { 
-            id: String(kotaTerpilih.id), 
-            nama: kotaTerpilih.name, 
-            lat: String(kotaTerpilih.latitude), 
-            lon: String(kotaTerpilih.longitude), 
-          }, 
-        }) 
-      } 
-    /> 
-  </> 
-)} 
+        <> 
+          <WeatherCard 
+            kota={kotaTerpilih.name} 
+            suhu={cuaca.saatIni.suhu} 
+            tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)} 
+          /> 
+          <Button 
+            title={sudahFavorit ? "Sudah di Favorit" : "Tambahkan ke Favorit"} 
+            disabled={sudahFavorit}
+            onPress={() => 
+              router.push({ 
+                pathname: "/tambah-favorit", 
+                params: { 
+                  id: String(kotaTerpilih.id), 
+                  nama: kotaTerpilih.name, 
+                  lat: String(kotaTerpilih.latitude), 
+                  lon: String(kotaTerpilih.longitude), 
+                }, 
+              }) 
+            } 
+          /> 
+        </> 
+      )} 
  
       {cuaca && ( 
         <Text style={{ fontSize: 12, color: "#888" }}> 
-          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin 
-          {cuaca.saatIni.kecepatanAngin} km/j 
+          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin: {cuaca.saatIni.kecepatanAngin} km/j 
         </Text> 
       )}
 
-      {/* TAMBAHAN TAHAP 13 - SUHU MINIMAL DAN MAKSIMAL */}
       {cuaca && (
         <Text style={{ fontSize: 12, color: "#888" }}>
           Suhu hari ini: {cuaca.harian.suhuMinimal[0]}°C - {cuaca.harian.suhuMaksimal[0]}°C
         </Text>
       )}
 
-      {/* TAMBAHAN TAHAP 13 - PM2.5 DAN PM10 */}
       {kualitasUdara && (
         <Text style={{ fontSize: 12, color: "#888" }}>
           PM2.5: {kualitasUdara.pm25} µg/m³ • PM10: {kualitasUdara.pm10} µg/m³
