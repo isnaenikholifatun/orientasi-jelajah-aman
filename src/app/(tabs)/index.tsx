@@ -64,8 +64,8 @@ export default function HalamanUtama() {
     setPesanError(null); 
   
     try { 
-      const data = await ambilCuacaOfflineFirst( 
- { id: kota.id, nama: kota.name, latitude: kota.latitude, longitude: kota.longitude }, 
+      const data = await ambilCuacaOfflineFirst(
+        { id: kota.id, nama: kota.name, latitude: kota.latitude, longitude: kota.longitude }, 
         { paksaPerbarui } 
       ); 
       if (idSaatIni !== requestIdRef.current) return; // hasil basi, abaikan 
@@ -141,8 +141,8 @@ offline)</Text>
               > 
                 <Text>{k.nama}</Text> 
               </TouchableOpacity> 
-            ))} 
- </View> 
+            ))}
+             </View> 
         )} 
   
         {sedangMemuat && <ActivityIndicator />} 
