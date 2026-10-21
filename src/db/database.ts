@@ -1,5 +1,5 @@
 // src/db/database.ts 
-import * as SQLite from "expo-sqlite"; 
+/*import * as SQLite from "expo-sqlite"; 
   
 const NAMA_DATABASE = "jelajah-aman.db"; 
 const VERSI_DATABASE = 1; 
@@ -50,4 +50,4 @@ async function migrasiDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
   // if (versiSaatIni < 2) { ...ALTER TABLE...; versiSaatIni = 2; } 
   
   await db.execAsync("PRAGMA user_version = " + VERSI_DATABASE); 
-} 
+}*/
