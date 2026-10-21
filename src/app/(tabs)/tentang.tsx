@@ -1,68 +1,72 @@
-import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { typeScale, spacing } from "../../constants/styles";
+import { ThemedText } from "../../components/themed-text";
+import { ThemedView } from "../../components/themed-view";
 
 export default function TabTentang() {
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        padding: spacing.sedang,
-        backgroundColor: "#F4F5F7",
-      }}
-    >
-      <Text
+    <ThemedView style={{ flex: 1 }}>
+      <SafeAreaView
         style={{
-          fontSize: typeScale.judul,
-          fontWeight: "bold",
-          marginBottom: spacing.sedang,
-        }}
-        accessibilityLabel="Judul Halaman Tentang Aplikasi"
-      >
-        Tentang Aplikasi
-      </Text>
-
-      <View
-        style={{
-          backgroundColor: "#fff",
+          flex: 1,
           padding: spacing.sedang,
-          borderRadius: 12,
+          backgroundColor: "transparent",
         }}
       >
-        <Text style={{ fontSize: typeScale.subjudul, color: "#666" }}>
-          Nama Aplikasi
-        </Text>
-
-        <Text
+        <ThemedText
           style={{
-            fontSize: typeScale.isi,
+            fontSize: typeScale.judul,
+            fontWeight: "bold",
             marginBottom: spacing.sedang,
           }}
+          accessibilityLabel="Judul Halaman Tentang Aplikasi"
         >
-          Aplikasi Informasi Cuaca
-        </Text>
+          Tentang Aplikasi
+        </ThemedText>
 
-        <Text style={{ fontSize: typeScale.subjudul, color: "#666" }}>
-          Versi
-        </Text>
-
-        <Text
+        <ThemedView
           style={{
-            fontSize: typeScale.isi,
-            marginBottom: spacing.sedang,
+            padding: spacing.sedang,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: "rgba(150, 150, 150, 0.2)",
           }}
         >
-          1.0.0
-        </Text>
+          <ThemedText style={{ fontSize: typeScale.subjudul, opacity: 0.6 }}>
+            Nama Aplikasi
+          </ThemedText>
 
-        <Text style={{ fontSize: typeScale.subjudul, color: "#666" }}>
-          Pembuat
-        </Text>
+          <ThemedText
+            style={{
+              fontSize: typeScale.isi,
+              marginBottom: spacing.sedang,
+            }}
+          >
+            Aplikasi Informasi Cuaca
+          </ThemedText>
 
-        <Text style={{ fontSize: typeScale.isi }}>
-          Isnaeni Kholifatun
-        </Text>
-      </View>
-    </SafeAreaView>
+          <ThemedText style={{ fontSize: typeScale.subjudul, opacity: 0.6 }}>
+            Versi
+          </ThemedText>
+
+          <ThemedText
+            style={{
+              fontSize: typeScale.isi,
+              marginBottom: spacing.sedang,
+            }}
+          >
+            1.0.0
+          </ThemedText>
+
+          <ThemedText style={{ fontSize: typeScale.subjudul, opacity: 0.6 }}>
+            Pembuat
+          </ThemedText>
+
+          <ThemedText style={{ fontSize: typeScale.isi }}>
+            Isnaeni Kholifatun
+          </ThemedText>
+        </ThemedView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }

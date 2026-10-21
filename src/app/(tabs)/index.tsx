@@ -1,8 +1,6 @@
 // src/app/(tabs)/index.tsx 
 import { useState, useEffect, useRef } from "react"; 
 import { 
-  View, 
-  Text, 
   ScrollView, 
   ActivityIndicator, 
   Button, 
@@ -15,6 +13,8 @@ import SearchBox from "../../components/SearchBox";
 import WeatherCard from "../../components/WeatherCard"; 
 import AtribusiCuaca from "../../components/AtribusiCuaca"; 
 import StatusData from "../../components/StatusData"; 
+import { ThemedText } from "../../components/themed-text";
+import { ThemedView } from "../../components/themed-view";
 import { useDebounce } from "../../hooks/use-debounce"; 
 import { cariKota } from "../../services/geocodingService"; 
 import { ambilCuacaOfflineFirst, BATAS_CACHE_MS } from "../../services/cuacaRepository"; 
@@ -106,92 +106,95 @@ export default function HalamanUtama() {
   } 
   
   return ( 
-    <SafeAreaView style={{ flex: 1 }}> 
-      <ScrollView 
-        contentContainerStyle={{ padding: 16, gap: 16 }} 
-        keyboardShouldPersistTaps="handled" 
-      > 
-        <SearchBox onCari={setTeksCari} /> 
+    <ThemedView style={{ flex: 1 }}> 
+      <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}> 
+        <ScrollView 
+          contentContainerStyle={{ padding: 16, gap: 16 }} 
+          keyboardShouldPersistTaps="handled" 
+        > 
+          <SearchBox onCari={setTeksCari} /> 
   
-        <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} /> 
-        {pesanLokasi && <Text accessibilityLabel={pesanLokasi}>{pesanLokasi}</Text>} 
+          <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} /> 
+          {pesanLokasi && <ThemedText accessibilityLabel={pesanLokasi}>{pesanLokasi}</ThemedText>} 
   
-        {hasilPencarian.map((kota) => ( 
-          <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}> 
-            <Text>{kota.name}</Text> 
-          </TouchableOpacity> 
-        ))} 
+          {hasilPencarian.map((kota) => ( 
+            <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}> 
+              <ThemedText>{kota.name}</ThemedText> 
+            </TouchableOpacity> 
+          ))} 
   
-        {kotaTersimpan.length > 0 && ( 
-          <View style={{ gap: 6 }}> 
-            <Text style={{ fontWeight: "bold" }}>Tersimpan di perangkat (bisa dibuka 
-offline)</Text> 
-            {kotaTersimpan.map((k) => ( 
-              <TouchableOpacity 
-                key={k.kunci} 
+          {kotaTersimpan.length > 0 && ( 
+            <ThemedView style={{ gap: 6 }}> 
+              <ThemedText style={{ fontWeight: "bold" }}>
+                Tersimpan di perangkat (bisa dibuka offline)
+              </ThemedText> 
+              {kotaTersimpan.map((k) => ( 
+                <TouchableOpacity 
+                  key={k.kunci} 
+                  onPress={() => 
+                    pilihKota({ 
+                      id: k.id, 
+                      name: k.nama, 
+                      latitude: k.latitude, 
+                      longitude: k.longitude, 
+                      country: "", 
+                    }) 
+                  } 
+                > 
+                  <ThemedText>{k.nama}</ThemedText> 
+                </TouchableOpacity> 
+              ))} 
+            </ThemedView> 
+          )} 
+  
+          {sedangMemuat && <ActivityIndicator />} 
+  
+          {pesanError && ( 
+            <ThemedView> 
+              <ThemedText accessibilityLabel={pesanError}>{pesanError}</ThemedText> 
+              <Button 
+                title="Coba Lagi" 
+                onPress={() => kotaTerpilih && pilihKota(kotaTerpilih, true)} 
+              /> 
+            </ThemedView> 
+          )} 
+  
+          {hasil && kotaTerpilih && !sedangMemuat && ( 
+            <> 
+              <StatusData sumber={hasil.sumber} disimpanPada={hasil.disimpanPada} /> 
+              <WeatherCard 
+                kota={kotaTerpilih.name} 
+                suhu={hasil.cuaca.saatIni.suhu} 
+                tingkatAQI={konversiTingkatAQI(hasil.kualitasUdara.indeksAQI)} 
+              /> 
+              <ThemedText style={{ fontSize: 12, opacity: 0.7 }}> 
+                Kondisi: {labelKodeCuaca(hasil.cuaca.saatIni.kodeCuaca)} {"\u2022"} Angin{" "} 
+                {hasil.cuaca.saatIni.kecepatanAngin} km/j 
+              </ThemedText> 
+              <Button 
+                title="Perbarui Sekarang" 
+                onPress={() => pilihKota(kotaTerpilih, true)} 
+              /> 
+              <Button 
+                title="Tambahkan ke Favorit" 
                 onPress={() => 
-                  pilihKota({ 
-                    id: k.id, 
-                    name: k.nama, 
-                    latitude: k.latitude, 
-                    longitude: k.longitude, 
-                    country: "", 
+                  router.push({ 
+                    pathname: "/tambah-favorit", 
+                    params: { 
+                      id: String(kotaTerpilih.id), 
+                      nama: kotaTerpilih.name, 
+                      lat: String(kotaTerpilih.latitude), 
+                      lon: String(kotaTerpilih.longitude), 
+                    }, 
                   }) 
                 } 
-              > 
-                <Text>{k.nama}</Text> 
-              </TouchableOpacity> 
-            ))}
-             </View> 
-        )} 
+              /> 
+            </> 
+          )} 
   
-        {sedangMemuat && <ActivityIndicator />} 
-  
-        {pesanError && ( 
-          <View> 
-            <Text accessibilityLabel={pesanError}>{pesanError}</Text> 
-            <Button 
-              title="Coba Lagi" 
-              onPress={() => kotaTerpilih && pilihKota(kotaTerpilih, true)} 
-            /> 
-          </View> 
-        )} 
-  
-        {hasil && kotaTerpilih && !sedangMemuat && ( 
-          <> 
-            <StatusData sumber={hasil.sumber} disimpanPada={hasil.disimpanPada} /> 
-            <WeatherCard 
-              kota={kotaTerpilih.name} 
-              suhu={hasil.cuaca.saatIni.suhu} 
-              tingkatAQI={konversiTingkatAQI(hasil.kualitasUdara.indeksAQI)} 
-            /> 
-            <Text style={{ fontSize: 12, color: "#888888" }}> 
-              Kondisi: {labelKodeCuaca(hasil.cuaca.saatIni.kodeCuaca)} {"\u2022"} Angin{" "} 
-              {hasil.cuaca.saatIni.kecepatanAngin} km/j 
-            </Text> 
-            <Button 
-              title="Perbarui Sekarang" 
-              onPress={() => pilihKota(kotaTerpilih, true)} 
-            /> 
-            <Button 
-              title="Tambahkan ke Favorit" 
-              onPress={() => 
-                router.push({ 
-                  pathname: "/tambah-favorit", 
-                  params: { 
-                    id: String(kotaTerpilih.id), 
-                    nama: kotaTerpilih.name, 
-                    lat: String(kotaTerpilih.latitude), 
-                    lon: String(kotaTerpilih.longitude), 
-                  }, 
-                }) 
-              } 
-            /> 
-          </> 
-        )} 
-  
-        <AtribusiCuaca /> 
-      </ScrollView> 
-    </SafeAreaView> 
+          <AtribusiCuaca /> 
+        </ScrollView> 
+      </SafeAreaView> 
+    </ThemedView> 
   ); 
-} 
+}

@@ -1,21 +1,46 @@
 import { useEffect, useState } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
-/**
- * To support static rendering, this value needs to be re-calculated on the client side for web
- */
+type ThemeMode = 'light' | 'dark' | 'system';
+
+type Listener = (mode: ThemeMode) => void;
+let currentMode: ThemeMode = 'system';
+const listeners = new Set<Listener>();
+
+export function setAppThemeMode(mode: ThemeMode) {
+  currentMode = mode;
+  listeners.forEach((listener) => listener(mode));
+}
+
 export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
+  const [mode, setMode] = useState<ThemeMode>(currentMode);
   const colorScheme = useRNColorScheme();
 
-  if (hasHydrated) {
-    return colorScheme;
+  useEffect(() => {
+    const listener: Listener = (newMode) => setMode(newMode);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  if (mode === 'system') {
+    return colorScheme ?? 'light';
   }
 
-  return 'light';
+  return mode;
+}
+
+export function useCurrentThemeMode() {
+  const [mode, setMode] = useState<ThemeMode>(currentMode);
+
+  useEffect(() => {
+    const listener: Listener = (newMode) => setMode(newMode);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  return mode;
 }
